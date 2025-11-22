@@ -5,7 +5,9 @@ node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
+build/
 web-build/
 expo-env.d.ts
 
@@ -41,3 +43,5 @@ app-example
 # generated native folders
 /ios
 /android
+
+.vscode/
