@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/use-theme';
 import { useAppDispatch } from '@/store/hooks';
 import { registerUser } from '@/store/slices/authSlice';
 import { registerSchema } from '@/schemas/validationSchemas';
@@ -10,7 +9,6 @@ import { registerSchema } from '@/schemas/validationSchemas';
 export default function RegisterScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { colors } = useTheme();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,90 +50,89 @@ export default function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800' }}
+      style={styles.container}
+      resizeMode="cover"
+      blurRadius={8}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Feather name="user-plus" size={60} color={colors.primary} />
-          <Text style={[styles.title, { color: colors.text }]}>Create Your Account</Text>
-          <Text style={[styles.subtitle, { color: colors.icon }]}>Join Sportify today</Text>
-        </View>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.card}>
+            <Text style={styles.title}>Register</Text>
 
-        <View style={styles.form}>
-          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Feather name="user" size={20} color={colors.icon} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Username"
-              placeholderTextColor={colors.icon}
-              value={username}
-              autoCapitalize="words"
-              onChangeText={setUsername}
-            />
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Feather name="user" size={18} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#999"
+                  value={username}
+                  autoCapitalize="words"
+                  onChangeText={setUsername}
+                />
+              </View>
+              {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
+
+              <View style={styles.inputContainer}>
+                <Feather name="mail" size={18} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  onChangeText={setEmail}
+                />
+              </View>
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+              <View style={styles.inputContainer}>
+                <Feather name="lock" size={18} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+              <View style={styles.inputContainer}>
+                <Feather name="lock" size={18} color="#666" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showConfirm}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                />
+              </View>
+              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+
+              <TouchableOpacity style={styles.button} onPress={handleRegister}>
+                <Text style={styles.buttonText}>Register</Text>
+              </TouchableOpacity>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.push('/login')}>
+                  <Text style={styles.link}>Login</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-          {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Feather name="mail" size={20} color={colors.icon} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Email"
-              placeholderTextColor={colors.icon}
-              value={email}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              onChangeText={setEmail}
-            />
-          </View>
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Feather name="lock" size={20} color={colors.icon} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Password"
-              placeholderTextColor={colors.icon}
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Feather name={showPassword ? 'eye' : 'eye-off'} size={20} color={colors.icon} />
-            </TouchableOpacity>
-          </View>
-          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-
-          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Feather name="lock" size={20} color={colors.icon} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: colors.text }]}
-              placeholder="Confirm Password"
-              placeholderTextColor={colors.icon}
-              secureTextEntry={!showConfirm}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-            <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeIcon}>
-              <Feather name={showConfirm ? 'eye' : 'eye-off'} size={20} color={colors.icon} />
-            </TouchableOpacity>
-          </View>
-          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
-
-          <TouchableOpacity style={[styles.button, { backgroundColor: colors.success }]} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Register</Text>
-          </TouchableOpacity>
-
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: colors.icon }]}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={[styles.link, { color: colors.primary }]}>Login</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
@@ -148,18 +145,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 8,
+    color: '#1a1a1a',
+    marginBottom: 25,
+    textAlign: 'center',
   },
   form: {
     width: '100%',
@@ -167,49 +168,46 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
     marginBottom: 16,
     paddingHorizontal: 16,
-    borderWidth: 1,
+    height: 50,
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    height: 56,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 8,
+    fontSize: 15,
+    color: '#1a1a1a',
   },
   button: {
-    borderRadius: 12,
-    height: 56,
+    backgroundColor: '#4CAF50',
+    borderRadius: 10,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 20,
   },
   footerText: {
-    fontSize: 15,
+    fontSize: 14,
+    color: '#666',
   },
   link: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
+    color: '#4CAF50',
   },
   errorText: {
     color: '#ef4444',

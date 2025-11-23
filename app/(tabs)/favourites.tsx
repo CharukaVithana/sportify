@@ -70,7 +70,7 @@ export default function FavouritesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Feather name="heart" size={24} color={colors.error} />
         <Text style={[styles.headerTitle, { color: colors.text }]}>My Favourites</Text>
         {favourites.length > 0 && (
