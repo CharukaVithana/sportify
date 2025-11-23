@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -33,15 +33,36 @@ export default function DetailsScreen() {
   const toggleFavourite = () => {
     if (isItemFavourite) {
       dispatch(removeFavouriteAsync(item.id) as any);
+      Alert.alert(
+        'Removed from Favourites',
+        `${item.title} has been removed from your favourites.`,
+        [{ text: 'OK' }]
+      );
     } else {
       dispatch(addFavouriteAsync(item) as any);
+      Alert.alert(
+        '❤️ Added to Favourites',
+        `${item.title} has been added to your favourites!`,
+        [{ text: 'OK' }]
+      );
     }
   };
 
+  // Check if image is a URL or emoji
+  const isImageUrl = item.image.startsWith('http');
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      <View style={[styles.imageContainer, { backgroundColor: colors.cardBackground }]}>
-        <Text style={styles.largeEmoji}>{item.image}</Text>
+      <View style={[styles.imageContainer, { backgroundColor: isImageUrl ? colors.background : colors.cardBackground }]}>
+        {isImageUrl ? (
+          <Image 
+            source={{ uri: item.image }} 
+            style={styles.detailImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.largeEmoji}>{item.image}</Text>
+        )}
       </View>
 
       <View style={styles.content}>
@@ -162,6 +183,10 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     alignItems: 'center',
     borderBottomWidth: 1,
+  },
+  detailImage: {
+    width: '100%',
+    height: 250,
   },
   largeEmoji: {
     fontSize: 120,

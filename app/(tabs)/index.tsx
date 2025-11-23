@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -30,20 +30,42 @@ export default function HomeScreen() {
   const toggleFavourite = (item: SportItem) => {
     if (isFavourite(item.id)) {
       dispatch(removeFavouriteAsync(item.id) as any);
+      Alert.alert(
+        'Removed from Favourites',
+        `${item.title} has been removed from your favourites.`,
+        [{ text: 'OK' }]
+      );
     } else {
       dispatch(addFavouriteAsync(item) as any);
+      Alert.alert(
+        '❤️ Added to Favourites',
+        `${item.title} has been added to your favourites!`,
+        [{ text: 'OK' }]
+      );
     }
   };
 
-  const renderCard = ({ item }: { item: SportItem }) => (
+  const renderCard = ({ item }: { item: SportItem }) => {
+    // Check if image is a URL or emoji
+    const isImageUrl = item.image.startsWith('http');
+    
+    return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
       onPress={() => router.push(`/details?id=${item.id}` as any)}
       activeOpacity={0.7}
     >
       <View style={styles.cardContent}>
-        <View style={styles.emoji}>
-          <Text style={styles.emojiText}>{item.image}</Text>
+        <View style={[styles.imageContainer, { backgroundColor: isImageUrl ? 'transparent' : colors.border }]}>
+          {isImageUrl ? (
+            <Image 
+              source={{ uri: item.image }} 
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.emojiText}>{item.image}</Text>
+          )}
         </View>
         <View style={styles.cardInfo}>
           <View style={styles.cardHeader}>
@@ -77,7 +99,8 @@ export default function HomeScreen() {
         </View>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -255,6 +278,20 @@ const styles = StyleSheet.create({
   cardContent: {
     flexDirection: 'row',
     padding: 16,
+  },
+  imageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  cardImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
   },
   emoji: {
     width: 60,
