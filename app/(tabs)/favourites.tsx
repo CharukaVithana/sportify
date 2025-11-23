@@ -1,47 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { useApp } from '@/contexts/AppContext';
-import { fetchSportsData } from '@/services/sportsApi';
-import { SportItem } from '@/contexts/AppContext';
+import { useApp, SportItem } from '@/contexts/AppContext';
 
-export default function HomeScreen() {
+export default function FavouritesScreen() {
   const router = useRouter();
-  const { user, isFavourite, addFavourite, removeFavourite } = useApp();
-  const [sportsData, setSportsData] = useState<SportItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const data = await fetchSportsData();
-      setSportsData(data);
-    } catch (error) {
-      console.error('Error loading sports data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
-  };
-
-  const toggleFavourite = (item: SportItem) => {
-    if (isFavourite(item.id)) {
-      removeFavourite(item.id);
-    } else {
-      addFavourite(item);
-    }
-  };
+  const { favourites, removeFavourite } = useApp();
 
   const renderCard = ({ item }: { item: SportItem }) => (
     <TouchableOpacity
@@ -71,15 +37,10 @@ export default function HomeScreen() {
               <Text style={styles.categoryText}>{item.category}</Text>
             </View>
             <TouchableOpacity
-              onPress={() => toggleFavourite(item)}
+              onPress={() => removeFavourite(item.id)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Feather
-                name="heart"
-                size={20}
-                color={isFavourite(item.id) ? Colors.light.error : Colors.light.icon}
-                fill={isFavourite(item.id) ? Colors.light.error : 'transparent'}
-              />
+              <Feather name="heart" size={20} color={Colors.light.error} fill={Colors.light.error} />
             </TouchableOpacity>
           </View>
         </View>
@@ -87,37 +48,38 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
-        <Text style={styles.loadingText}>Loading sports data...</Text>
-      </View>
-    );
-  }
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <Feather name="heart" size={80} color={Colors.light.border} />
+      <Text style={styles.emptyTitle}>No Favourites Yet!</Text>
+      <Text style={styles.emptyText}>
+        Start adding your favorite sports events, players, and teams from the Home screen.
+      </Text>
+      <TouchableOpacity style={styles.exploreButton} onPress={() => router.push('/(tabs)')}>
+        <Text style={styles.exploreButtonText}>Explore Sports</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Sportify</Text>
-          <Text style={styles.headerSubtitle}>Discover sports events</Text>
-        </View>
-        <View style={styles.userBadge}>
-          <Feather name="user" size={20} color={Colors.light.primary} />
-          <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
-        </View>
+        <Feather name="heart" size={24} color={Colors.light.error} />
+        <Text style={styles.headerTitle}>My Favourites</Text>
+        {favourites.length > 0 && (
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{favourites.length}</Text>
+          </View>
+        )}
       </View>
 
       <FlatList
-        data={sportsData}
+        data={favourites}
         renderItem={renderCard}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={favourites.length === 0 ? styles.emptyListContent : styles.listContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.light.primary]} />
-        }
+        ListEmptyComponent={renderEmpty}
       />
     </View>
   );
@@ -154,52 +116,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.background,
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.light.background,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: Colors.light.icon,
-  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: Colors.light.background,
+    gap: 10,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.light.primary,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: Colors.light.icon,
-    marginTop: 2,
-  },
-  userBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: '600',
     color: Colors.light.text,
+  },
+  countBadge: {
+    backgroundColor: Colors.light.error,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 28,
+    alignItems: 'center',
+  },
+  countText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   listContent: {
     padding: 16,
+  },
+  emptyListContent: {
+    flexGrow: 1,
   },
   card: {
     backgroundColor: Colors.light.cardBackground,
@@ -278,6 +225,42 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 12,
     color: Colors.light.primary,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.light.text,
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: Colors.light.icon,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  exploreButton: {
+    backgroundColor: Colors.light.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  exploreButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

@@ -1,50 +1,154 @@
-# Welcome to your Expo app 👋
+# 🏆 Sportify - Your Sports Hub
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A beautiful, user-friendly React Native mobile app built with Expo for discovering and tracking sports events, players, and teams.
 
-## Get started
+## ✨ Features
 
-1. Install dependencies
+### 📱 Screens Implemented
 
-   ```bash
-   npm install
-   ```
+1. **Splash Screen** - Welcoming animation with app logo
+2. **Login Screen** - Clean authentication with email/password
+3. **Register Screen** - User registration with validation
+4. **Home Screen** - Browse sports items with API integration
+5. **Details Screen** - Full information about selected items
+6. **Favourites Screen** - Manage your favorite sports items
+7. **Profile Screen** - User settings and preferences
+8. **Explore Screen** - Additional content discovery
 
-2. Start the app
+### 🎨 UI/UX Features
 
-   ```bash
-   npx expo start
-   ```
+- **Clean, Modern Design** with indigo/purple color scheme
+- **Smooth Animations** and transitions
+- **Responsive Cards** with emoji icons
+- **Pull-to-Refresh** on home screen
+- **Dark Mode Toggle** (UI implemented)
+- **Status Badges** (Active/Upcoming/Completed)
+- **Category Icons** (Match/Player/Team)
+- **Heart Icon** for favourites
+- **Professional Tab Navigation**
 
-In the output, you'll find options to open the app in a
+### 🛠️ Technical Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Expo Router** for file-based routing
+- **React Context API** for state management
+- **TypeScript** for type safety
+- **Mock API** with sports data
+- **Feather Icons** throughout
+- **Form Validation** on login/register
+- **KeyboardAvoidingView** for better UX
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📂 Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+sportify/
+├── app/
+│   ├── (tabs)/
+│   │   ├── index.tsx          # Home screen
+│   │   ├── favourites.tsx     # Favourites screen
+│   │   ├── profile.tsx        # Profile screen  
+│   │   ├── explore.tsx        # Explore screen
+│   │   └── _layout.tsx        # Tab navigator
+│   ├── details.tsx            # Details screen
+│   ├── login.tsx              # Login screen
+│   ├── register.tsx           # Register screen
+│   ├── splash.tsx             # Splash screen
+│   ├── index.tsx              # Root redirect
+│   └── _layout.tsx            # Root layout with providers
+├── contexts/
+│   └── AppContext.tsx         # Global app state
+├── services/
+│   └── sportsApi.ts           # Mock API data
+├── constants/
+│   └── theme.ts               # Colors and styles
+└── components/                # Reusable components
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🚀 Getting Started
 
-## Learn more
+### Prerequisites
 
-To learn more about developing your project with Expo, look at the following resources:
+- Node.js 18+
+- Expo Go app on your phone
+- npm or yarn
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Installation
 
-## Join the community
+```bash
+# Install dependencies
+npm install
 
-Join our community of developers creating universal apps.
+# Start the development server
+npx expo start
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Or with cleared cache
+npx expo start -c
+```
+
+### Running the App
+
+1. **On Mobile Device:**
+   - Open Expo Go app
+   - Scan the QR code from terminal
+   - App will load automatically
+
+2. **On Web:**
+   - Press `w` in the terminal
+   - Opens in browser at localhost:8081
+
+## 📱 App Flow
+
+1. **App Opens** → Splash Screen (2 seconds)
+2. **Splash** → Login Screen
+3. **Login** → Home Screen (Tabs)
+4. **Tap Card** → Details Screen
+5. **Heart Icon** → Add/Remove Favourites
+6. **Profile** → Settings & Logout
+
+## 🎯 Mock Data
+
+The app includes 10 mock sports items:
+- NBA matches (Lakers vs Warriors)
+- Tennis events (Wimbledon Finals)
+- Football players (Messi, Ronaldo)
+- Formula 1 races (Monaco GP)
+- Teams (Manchester United, Warriors)
+- And more!
+
+## 🎨 Color Scheme
+
+- **Primary:** #6366f1 (Indigo)
+- **Success:** #10b981 (Green)
+- **Error:** #ef4444 (Red)
+- **Background:** #fff (White)
+- **Card Background:** #f9fafb (Light Gray)
+
+## 📝 TODO / Next Steps
+
+- [ ] Connect to real sports API (SportRadar, ESPN, etc.)
+- [ ] Implement actual authentication
+- [ ] Add search functionality
+- [ ] Enable dark mode properly
+- [ ] Add notifications
+- [ ] Implement user profile editing
+- [ ] Add social features (share, comment)
+- [ ] Cache data with AsyncStorage
+- [ ] Add loading skeletons
+- [ ] Implement error boundaries
+
+## 🐛 Known Issues
+
+- Routes use `as any` for TypeScript - will be fixed in Expo Router update
+- Dark mode is UI only (not functional yet)
+- User data is not persisted
+
+## 📄 License
+
+This project is for educational purposes.
+
+## 👨‍💻 Developer
+
+Built with ❤️ using Expo, React Native, and TypeScript
+
+---
+
+**Note:** This is a demo app with mock data. Replace mock API calls with real sports API for production use.
