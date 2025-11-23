@@ -1,17 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '@/contexts/AppContext';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logoutUser } from '@/store/slices/authSlice';
 
 export default function ProfileScreen() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
+  const routerHook = useRouter();
   const user = useAppSelector((state) => state.auth.user);
   const favourites = useAppSelector((state) => state.favourites.items);
+  const sportsData = useAppSelector((state) => state.sports.items);
   const { theme, toggleTheme } = useApp();
   const { colors } = useTheme();
 
@@ -26,8 +28,8 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             dispatch(logoutUser() as any);
-            // Use href to force navigation out of tabs
-            router.push('../../login' as any);
+            // Navigate to login
+            routerHook.push('/login');
           },
         },
       ]
@@ -36,30 +38,36 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <View style={styles.avatarContainer}>
-          <View style={[styles.avatar, { backgroundColor: user?.avatar?.startsWith('data:image') ? 'transparent' : colors.primary }]}>
-            {user?.avatar?.startsWith('data:image') ? (
-              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-            ) : user?.avatar ? (
-              <Text style={styles.avatarEmoji}>{user.avatar}</Text>
-            ) : (
-              <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
-            )}
+      <LinearGradient
+        colors={theme === 'dark' ? ['#4CAF50', '#2E7D32', '#1B5E20'] : ['#81C784', '#4CAF50', '#388E3C']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientHeader}
+      >
+        <View style={styles.profileRow}>
+          <View style={styles.avatarContainer}>
+            <View style={[styles.avatar, { backgroundColor: user?.avatar?.startsWith('data:image') ? 'transparent' : '#fff' }]}>
+              {user?.avatar?.startsWith('data:image') ? (
+                <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+              ) : user?.avatar ? (
+                <Text style={styles.avatarEmoji}>{user.avatar}</Text>
+              ) : (
+                <Text style={[styles.avatarText, { color: colors.primary }]}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
+              )}
+            </View>
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              onPress={() => routerHook.push('/edit-profile')}
+            >
+              <Feather name="camera" size={16} color="#fff" />
+            </TouchableOpacity>
           </View>
           <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: colors.text }]}>{user?.name || 'Guest User'}</Text>
-            <Text style={[styles.userEmail, { color: colors.icon }]}>{user?.email || 'guest@sportify.com'}</Text>
+            <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>
+            <Text style={styles.userEmail}>{user?.email || 'guest@sportify.com'}</Text>
           </View>
         </View>
-        <TouchableOpacity 
-          style={[styles.editButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/edit-profile' as any)}
-        >
-          <Feather name="edit-2" size={16} color="#fff" />
-          <Text style={styles.editButtonText}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       <View style={[styles.statsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
         <View style={styles.statBox}>
@@ -70,7 +78,7 @@ export default function ProfileScreen() {
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statBox}>
           <Feather name="activity" size={24} color={colors.primary} />
-          <Text style={[styles.statNumber, { color: colors.primary }]}>10</Text>
+          <Text style={[styles.statNumber, { color: colors.primary }]}>{sportsData.length}</Text>
           <Text style={[styles.statLabel, { color: colors.icon }]}>Events</Text>
         </View>
       </View>
@@ -100,35 +108,28 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
 
-        <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <TouchableOpacity 
+          style={[styles.menuItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+          onPress={() => router.push('/edit-profile')}
+        >
           <View style={styles.menuItemLeft}>
-            <Feather name="bell" size={20} color={colors.icon} />
-            <Text style={[styles.menuItemText, { color: colors.text }]}>Notifications</Text>
+            <Feather name="user" size={20} color={colors.primary} />
+            <Text style={[styles.menuItemText, { color: colors.text }]}>Edit Profile</Text>
           </View>
           <Feather name="chevron-right" size={20} color={colors.icon} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <TouchableOpacity 
+          style={[styles.menuItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+          onPress={handleLogout}
+        >
           <View style={styles.menuItemLeft}>
-            <Feather name="lock" size={20} color={colors.icon} />
-            <Text style={[styles.menuItemText, { color: colors.text }]}>Privacy & Security</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color={colors.icon} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          <View style={styles.menuItemLeft}>
-            <Feather name="help-circle" size={20} color={colors.icon} />
-            <Text style={[styles.menuItemText, { color: colors.text }]}>Help & Support</Text>
+            <Feather name="log-out" size={20} color={colors.error} />
+            <Text style={[styles.menuItemText, { color: colors.error }]}>Logout</Text>
           </View>
           <Feather name="chevron-right" size={20} color={colors.icon} />
         </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={[styles.logoutButton, { borderColor: colors.error }]} onPress={handleLogout}>
-        <Feather name="log-out" size={20} color={colors.error} />
-        <Text style={[styles.logoutText, { color: colors.error }]}>Logout</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -137,47 +138,82 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  gradientHeader: {
+    paddingTop: 40,
+    paddingBottom: 30,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 20,
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 30,
+  },
   header: {
     padding: 24,
     paddingTop: 16,
     borderBottomWidth: 1,
+    alignItems: 'center',
   },
   avatarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    marginBottom: 16,
+    position: 'relative',
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: -5,
+    backgroundColor: '#4CAF50',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
   },
   avatarText: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: '#fff',
   },
   avatarEmoji: {
-    fontSize: 50,
+    fontSize: 55,
   },
   avatarImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   userInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 4,
+    color: '#fff',
   },
   userEmail: {
     fontSize: 14,
+    color: '#fff',
+    opacity: 0.9,
   },
   editButton: {
     flexDirection: 'row',
@@ -283,7 +319,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 20,
-    marginTop: 10,
+    marginTop: 40,
     marginBottom: 40,
     paddingVertical: 16,
     borderRadius: 12,

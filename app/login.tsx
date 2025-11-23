@@ -4,37 +4,32 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/authSlice';
-import { loginSchema } from '@/schemas/validationSchemas';
 
 export default function LoginScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
 
   async function handleLogin() {
     try {
-      // Validate with Yup
-      await loginSchema.validate({ email, password }, { abortEarly: false });
+      // Basic validation
+      if (!username || !password) {
+        setErrors({
+          username: !username ? 'Username is required' : undefined,
+          password: !password ? 'Password is required' : undefined,
+        });
+        return;
+      }
       setErrors({});
 
-      // Login - validate against registered users
-      await dispatch(loginUser(email, password) as any);
+      // Login using DummyJSON API
+      await dispatch(loginUser(username, password) as any);
       router.replace('/(tabs)');
     } catch (error: any) {
-      if (error.name === 'ValidationError') {
-        const validationErrors: any = {};
-        error.inner.forEach((err: any) => {
-          validationErrors[err.path] = err.message;
-        });
-        setErrors(validationErrors);
-      } else if (error.message === 'Invalid email or password') {
-        Alert.alert('Login Failed', 'Invalid email or password. Please try again or register a new account.');
-      } else {
-        Alert.alert('Error', 'An error occurred during login');
-      }
+      Alert.alert('Login Failed', error.message || 'Invalid username or password. Try: emilys / emilyspass');
     }
   }
 
@@ -55,18 +50,17 @@ export default function LoginScreen() {
 
             <View style={styles.form}>
               <View style={styles.inputContainer}>
-                <Feather name="mail" size={18} color="#666" style={styles.inputIcon} />
+                <Feather name="user" size={18} color="#666" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder="Username"
                   placeholderTextColor="#999"
-                  value={email}
+                  value={username}
                   autoCapitalize="none"
-                  keyboardType="email-address"
-                  onChangeText={setEmail}
+                  onChangeText={setUsername}
                 />
               </View>
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
 
               <View style={styles.inputContainer}>
                 <Feather name="lock" size={18} color="#666" style={styles.inputIcon} />
@@ -84,6 +78,12 @@ export default function LoginScreen() {
               <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Login</Text>
               </TouchableOpacity>
+
+              <View style={styles.testCredentials}>
+                <Text style={styles.testTitle}>💡 Test Credentials (DummyJSON):</Text>
+                <Text style={styles.testText}>Username: emilys | Password: emilyspass</Text>
+                <Text style={styles.testText}>Or register with any email!</Text>
+              </View>
 
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Don&apos;t have an account? </Text>
@@ -178,5 +178,24 @@ const styles = StyleSheet.create({
     marginTop: -12,
     marginBottom: 12,
     marginLeft: 4,
+  },
+  testCredentials: {
+    backgroundColor: '#FFF9E6',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4CAF50',
+  },
+  testTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#666',
+    marginBottom: 4,
+  },
+  testText: {
+    fontSize: 11,
+    color: '#666',
+    fontFamily: 'monospace',
   },
 });

@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
             {/* Logo */}
             <View style={styles.logoContainer}>
               <View style={styles.logo}>
-                <Feather name="activity" size={60} color="#000" />
+                <Feather name="activity" size={60} color="#fff" />
               </View>
             </View>
 
@@ -82,11 +82,11 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
-    borderRadius: 30,
-    backgroundColor: '#CDFF00',
+    borderRadius: 60,
+    backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#CDFF00',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -112,11 +112,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   getStartedButton: {
-    backgroundColor: '#CDFF00',
+    backgroundColor: '#4CAF50',
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#CDFF00',
+    shadowColor: '#4CAF50',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   getStartedText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#fff',
   },
   loginButton: {
     backgroundColor: 'transparent',

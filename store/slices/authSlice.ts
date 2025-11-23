@@ -2,17 +2,21 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
+  id?: number;
   name: string;
   email: string;
+  username?: string;
   token?: string;
-  password?: string; // For validation only, not stored in state
-  avatar?: string; // Emoji avatar
+  password?: string;
+  avatar?: string;
+  image?: string;
 }
 
 interface RegisteredUser {
   name: string;
   email: string;
   password: string;
+  username?: string;
 }
 
 interface AuthState {
@@ -72,64 +76,102 @@ const saveRegisteredUser = async (user: RegisteredUser): Promise<void> => {
   }
 };
 
-// Register new user
+// Register new user - using DummyJSON API
 export const registerUser = (user: RegisteredUser) => async (dispatch: any) => {
   try {
-    // Check if email already exists
-    const users = await getRegisteredUsers();
-    const existingUser = users.find(u => u.email.toLowerCase() === user.email.toLowerCase());
-    
-    if (existingUser) {
-      throw new Error('Email already registered');
+    // DummyJSON add user endpoint (Note: This is simulated, data won't persist on server)
+    const response = await fetch('https://dummyjson.com/users/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName: user.name.split(' ')[0] || user.name,
+        lastName: user.name.split(' ')[1] || '',
+        email: user.email,
+        username: user.email.split('@')[0], // Create username from email
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
     }
 
-    // Save to registered users
-    await saveRegisteredUser(user);
-
-    // Log in the user
-    const token = 'token-' + Date.now();
-    const loggedInUser: User = {
+    // Save locally for offline access - only save user data, don't auto-login
+    const userToSave: RegisteredUser = {
       name: user.name,
       email: user.email,
-      token,
+      password: user.password,
+      username: data.username || user.email.split('@')[0],
     };
+    await saveRegisteredUser(userToSave);
 
-    await AsyncStorage.setItem('user', JSON.stringify(loggedInUser));
-    await AsyncStorage.setItem('authToken', token);
-    dispatch(setUser(loggedInUser));
-
-    return { success: true };
+    return { success: true, username: userToSave.username };
   } catch (error: any) {
     console.error('Register error:', error);
     throw error;
   }
 };
 
-// Login user - validate against registered users
-export const loginUser = (email: string, password: string) => async (dispatch: any) => {
+// Login user - using DummyJSON API
+export const loginUser = (username: string, password: string) => async (dispatch: any) => {
   try {
-    const users = await getRegisteredUsers();
-    const user = users.find(
-      u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
+    // First, try DummyJSON API login
+    const response = await fetch('https://dummyjson.com/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username,
+        password,
+        expiresInMins: 30,
+      }),
+    });
 
-    if (!user) {
-      throw new Error('Invalid email or password');
+    const data = await response.json();
+
+    if (response.ok) {
+      // DummyJSON returns: id, username, email, firstName, lastName, gender, image, token
+      const loggedInUser: User = {
+        id: data.id,
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        username: data.username,
+        token: data.token,
+        avatar: data.image, // Profile image from API
+      };
+
+      await AsyncStorage.setItem('user', JSON.stringify(loggedInUser));
+      await AsyncStorage.setItem('authToken', data.token);
+      dispatch(setUser(loggedInUser));
+
+      return { success: true };
     }
 
-    const token = 'token-' + Date.now();
-    const loggedInUser: User = {
-      name: user.name,
-      email: user.email,
-      avatar: (user as any).avatar, // Include avatar from registered user
-      token,
-    };
+    // If API login fails, try local registered users
+    const users = await getRegisteredUsers();
+    const localUser = users.find(
+      u => (u.username?.toLowerCase() === username.toLowerCase() || 
+            u.email.toLowerCase() === username.toLowerCase()) && 
+           u.password === password
+    );
 
-    await AsyncStorage.setItem('user', JSON.stringify(loggedInUser));
-    await AsyncStorage.setItem('authToken', token);
-    dispatch(setUser(loggedInUser));
+    if (localUser) {
+      const token = 'token-' + Date.now();
+      const loggedInUser: User = {
+        name: localUser.name,
+        email: localUser.email,
+        username: localUser.username || localUser.email.split('@')[0],
+        token,
+      };
 
-    return { success: true };
+      await AsyncStorage.setItem('user', JSON.stringify(loggedInUser));
+      await AsyncStorage.setItem('authToken', token);
+      dispatch(setUser(loggedInUser));
+
+      return { success: true };
+    }
+
+    throw new Error('Invalid credentials');
   } catch (error: any) {
     console.error('Login error:', error);
     throw error;

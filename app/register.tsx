@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAppDispatch } from '@/store/hooks';
 import { registerUser } from '@/store/slices/authSlice';
-import { registerSchema } from '@/schemas/validationSchemas';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -18,34 +17,53 @@ export default function RegisterScreen() {
   const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string; confirmPassword?: string }>({});
 
   async function handleRegister() {
+    Alert.alert('Test', 'Button clicked!'); // TEST
+    console.log('Register button clicked');
     try {
-      await registerSchema.validate({ username, email, password, confirmPassword }, { abortEarly: false });
+      // Basic validation
+      if (!username || !email || !password || !confirmPassword) {
+        console.log('Validation failed', { username, email, password, confirmPassword });
+        setErrors({
+          username: !username ? 'Username is required' : undefined,
+          email: !email ? 'Email is required' : undefined,
+          password: !password ? 'Password is required' : undefined,
+          confirmPassword: !confirmPassword ? 'Confirm password is required' : undefined,
+        });
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        console.log('Passwords do not match');
+        setErrors({ confirmPassword: 'Passwords do not match' });
+        return;
+      }
+
       setErrors({});
 
       // Register the user
       const newUser = {
         name: username.trim(),
         email: email.trim(),
-        password: password, // Store password for validation
+        password: password,
       };
 
-      await dispatch(registerUser(newUser) as any);
+      console.log('Dispatching registerUser with:', newUser);
+      const result = await dispatch(registerUser(newUser));
+      console.log('Registration result:', result);
       
-      Alert.alert('Success', 'Account created successfully! Please login.', [
-        { text: 'OK', onPress: () => router.replace('/login') }
-      ]);
+      const generatedUsername = email.split('@')[0]; // Extract username from email
+      
+      // Show success message and redirect to login
+      Alert.alert(
+        'Success!', 
+        `Account created successfully!\n\nYour username: ${generatedUsername}\n\nPlease login with your credentials.`,
+        [
+          { text: 'OK', onPress: () => router.replace('/login') }
+        ]
+      );
     } catch (error: any) {
-      if (error.name === 'ValidationError') {
-        const validationErrors: any = {};
-        error.inner.forEach((err: any) => {
-          validationErrors[err.path] = err.message;
-        });
-        setErrors(validationErrors);
-      } else if (error.message === 'Email already registered') {
-        Alert.alert('Registration Failed', 'This email is already registered. Please use a different email or login.');
-      } else {
-        Alert.alert('Error', 'An error occurred during registration');
-      }
+      console.error('Registration error:', error);
+      Alert.alert('Registration Failed', error.message || 'An error occurred during registration. Please try again.');
     }
   }
 
@@ -102,6 +120,9 @@ export default function RegisterScreen() {
                   value={password}
                   onChangeText={setPassword}
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Feather name={showPassword ? "eye" : "eye-off"} size={18} color="#666" />
+                </TouchableOpacity>
               </View>
               {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
@@ -115,10 +136,18 @@ export default function RegisterScreen() {
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                 />
+                <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                  <Feather name={showConfirm ? "eye" : "eye-off"} size={18} color="#666" />
+                </TouchableOpacity>
               </View>
               {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
 
-              <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={handleRegister}
+                onPressIn={() => console.log('Button press detected!')}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.buttonText}>Register</Text>
               </TouchableOpacity>
 
