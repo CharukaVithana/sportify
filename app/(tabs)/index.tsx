@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -95,10 +95,22 @@ export default function HomeScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>Sportify</Text>
           <Text style={[styles.headerSubtitle, { color: colors.icon }]}>Discover sports events</Text>
         </View>
-        <View style={[styles.userBadge, { backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.border }]}>
-          <Feather name="user" size={20} color={colors.primary} />
-          <Text style={[styles.userName, { color: colors.primary }]}>{user?.name || 'Guest'}</Text>
-        </View>
+        <TouchableOpacity 
+          style={[styles.userCard, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+          onPress={() => router.push('/(tabs)/profile')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.userAvatar, { backgroundColor: user?.avatar?.startsWith('data:image') ? 'transparent' : '#fff' }]}>
+            {user?.avatar?.startsWith('data:image') ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+            ) : user?.avatar ? (
+              <Text style={styles.avatarEmoji}>{user.avatar}</Text>
+            ) : (
+              <Text style={[styles.avatarText, { color: colors.primary }]}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
+            )}
+          </View>
+          <Text style={styles.userName} numberOfLines={1}>{user?.name || 'Guest'}</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -171,6 +183,54 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  userAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  avatarEmoji: {
+    fontSize: 18,
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    maxWidth: 80,
+  },
+  userEmail: {
+    fontSize: 11,
+    maxWidth: 100,
+  },
   userBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -178,10 +238,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     gap: 6,
-  },
-  userName: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   listContent: {
     padding: 16,

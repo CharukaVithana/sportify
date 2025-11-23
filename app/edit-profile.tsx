@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setUser } from '@/store/slices/authSlice';
 import { editProfileSchema } from '@/schemas/validationSchemas';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -16,7 +17,44 @@ export default function EditProfileScreen() {
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+
+  const avatarEmojis = ['😀', '😎', '🤓', '🥳', '🤩', '😇', '🙂', '😊', '🤗', '🥰', '😍', '🤠', '👨‍💼', '👩‍💼', '👨‍🎓', '👩‍🎓', '⚽', '🏀', '🎾', '🏈'];
+
+  const handleChangeAvatar = () => {
+    setShowAvatarModal(true);
+  };
+
+  const pickImageFromGallery = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('Permission Required', 'Please allow access to your photos to change your profile picture.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true, // Get base64 encoded string
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      // Store as base64 data URI for cross-platform compatibility
+      const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      setAvatar(base64Image);
+      setShowAvatarModal(false);
+    }
+  };
+
+  const selectAvatar = (emoji: string) => {
+    setAvatar(emoji);
+    setShowAvatarModal(false);
+  };
 
   const handleSave = async () => {
     try {
@@ -27,10 +65,27 @@ export default function EditProfileScreen() {
         ...user,
         name: name.trim(),
         email: email.trim(),
+        avatar: avatar,
         token: user?.token || 'dummy-token',
       };
 
-      // Update AsyncStorage
+      // Update registered users list in AsyncStorage
+      const registeredUsersStr = await AsyncStorage.getItem('registeredUsers');
+      if (registeredUsersStr) {
+        const registeredUsers = JSON.parse(registeredUsersStr);
+        const userIndex = registeredUsers.findIndex((u: any) => u.email === user?.email);
+        if (userIndex !== -1) {
+          registeredUsers[userIndex] = {
+            ...registeredUsers[userIndex],
+            name: name.trim(),
+            email: email.trim(),
+            avatar: avatar,
+          };
+          await AsyncStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+        }
+      }
+
+      // Update current user in AsyncStorage
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       
       // Update Redux state
@@ -63,10 +118,16 @@ export default function EditProfileScreen() {
     >
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={[styles.avatarSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>{name.charAt(0).toUpperCase() || 'G'}</Text>
+          <View style={[styles.avatar, { backgroundColor: avatar?.startsWith('data:image') ? 'transparent' : colors.primary }]}>
+            {avatar?.startsWith('data:image') ? (
+              <Image source={{ uri: avatar }} style={styles.avatarImage} />
+            ) : avatar ? (
+              <Text style={styles.avatarEmoji}>{avatar}</Text>
+            ) : (
+              <Text style={styles.avatarText}>{name.charAt(0).toUpperCase() || 'G'}</Text>
+            )}
           </View>
-          <TouchableOpacity style={styles.changePhotoButton}>
+          <TouchableOpacity style={styles.changePhotoButton} onPress={handleChangeAvatar}>
             <Feather name="camera" size={20} color={colors.primary} />
             <Text style={[styles.changePhotoText, { color: colors.primary }]}>Change Photo</Text>
           </TouchableOpacity>
@@ -122,6 +183,50 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Avatar Selection Modal */}
+      <Modal
+        visible={showAvatarModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAvatarModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Choose Your Avatar</Text>
+              <TouchableOpacity onPress={() => setShowAvatarModal(false)}>
+                <Feather name="x" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.galleryButton, { backgroundColor: colors.primary }]}
+              onPress={pickImageFromGallery}
+            >
+              <Feather name="image" size={24} color="#fff" />
+              <Text style={styles.galleryButtonText}>Choose from Gallery</Text>
+            </TouchableOpacity>
+
+            <Text style={[styles.orText, { color: colors.icon }]}>Or select an emoji</Text>
+
+            <FlatList
+              data={avatarEmojis}
+              keyExtractor={(item) => item}
+              numColumns={5}
+              contentContainerStyle={styles.emojiGrid}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.emojiButton, { backgroundColor: colors.background }]}
+                  onPress={() => selectAvatar(item)}
+                >
+                  <Text style={styles.emoji}>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -147,6 +252,14 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  avatarEmoji: {
+    fontSize: 50,
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   changePhotoButton: {
     flexDirection: 'row',
@@ -213,4 +326,60 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 4,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  galleryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    margin: 20,
+    marginBottom: 10,
+    borderRadius: 12,
+    gap: 10,
+  },
+  galleryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  orText: {
+    textAlign: 'center',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  emojiGrid: {
+    padding: 20,
+  },
+  emojiButton: {
+    width: 60,
+    height: 60,
+    margin: 5,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emoji: {
+    fontSize: 32,
+  },
 });
+

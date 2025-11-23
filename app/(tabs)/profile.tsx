@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useApp } from '@/contexts/AppContext';
@@ -38,8 +38,14 @@ export default function ProfileScreen() {
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View style={styles.avatarContainer}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
+          <View style={[styles.avatar, { backgroundColor: user?.avatar?.startsWith('data:image') ? 'transparent' : colors.primary }]}>
+            {user?.avatar?.startsWith('data:image') ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+            ) : user?.avatar ? (
+              <Text style={styles.avatarEmoji}>{user.avatar}</Text>
+            ) : (
+              <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
+            )}
           </View>
           <View style={styles.userInfo}>
             <Text style={[styles.userName, { color: colors.text }]}>{user?.name || 'Guest User'}</Text>
@@ -150,9 +156,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  avatarEmoji: {
+    fontSize: 50,
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   userInfo: {
     flex: 1,

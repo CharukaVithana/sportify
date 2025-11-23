@@ -6,6 +6,7 @@ interface User {
   email: string;
   token?: string;
   password?: string; // For validation only, not stored in state
+  avatar?: string; // Emoji avatar
 }
 
 interface RegisteredUser {
@@ -120,6 +121,7 @@ export const loginUser = (email: string, password: string) => async (dispatch: a
     const loggedInUser: User = {
       name: user.name,
       email: user.email,
+      avatar: (user as any).avatar, // Include avatar from registered user
       token,
     };
 
