@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addFavouriteAsync, removeFavouriteAsync } from '@/store/slices/favouritesSlice';
@@ -33,18 +34,22 @@ export default function DetailsScreen() {
   const toggleFavourite = () => {
     if (isItemFavourite) {
       dispatch(removeFavouriteAsync(item.id) as any);
-      Alert.alert(
-        'Removed from Favourites',
-        `${item.title} has been removed from your favourites.`,
-        [{ text: 'OK' }]
-      );
+      Toast.show({
+        type: 'info',
+        text1: 'Removed from Favourites',
+        text2: `${item.title} has been removed`,
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     } else {
       dispatch(addFavouriteAsync(item) as any);
-      Alert.alert(
-        '❤️ Added to Favourites',
-        `${item.title} has been added to your favourites!`,
-        [{ text: 'OK' }]
-      );
+      Toast.show({
+        type: 'success',
+        text1: '❤️ Added to Favourites',
+        text2: `${item.title} has been added!`,
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     }
   };
 

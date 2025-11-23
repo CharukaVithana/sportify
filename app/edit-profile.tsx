@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Modal, FlatList, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setUser } from '@/store/slices/authSlice';
@@ -31,7 +32,6 @@ export default function EditProfileScreen() {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert('Permission Required', 'Please allow access to your photos to change your profile picture.');
       return;
     }
 
@@ -96,7 +96,13 @@ export default function EditProfileScreen() {
       
       // Show success message after navigation
       setTimeout(() => {
-        Alert.alert('Success', 'Profile updated successfully!');
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Profile updated successfully!',
+          position: 'top',
+          visibilityTime: 2000,
+        });
       }, 300);
     } catch (error: any) {
       if (error.name === 'ValidationError') {
@@ -106,7 +112,13 @@ export default function EditProfileScreen() {
         });
         setErrors(validationErrors);
       } else {
-        Alert.alert('Error', 'Failed to update profile');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to update profile',
+          position: 'top',
+          visibilityTime: 3000,
+        });
       }
     }
   };

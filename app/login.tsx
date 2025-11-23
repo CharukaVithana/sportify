@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/authSlice';
+import { loadFavourites } from '@/store/slices/favouritesSlice';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -21,15 +23,39 @@ export default function LoginScreen() {
           username: !username ? 'Username is required' : undefined,
           password: !password ? 'Password is required' : undefined,
         });
+        Toast.show({
+          type: 'error',
+          text1: 'Missing Fields',
+          text2: 'Please fill in all fields',
+          position: 'top',
+          visibilityTime: 3000,
+        });
         return;
       }
       setErrors({});
 
       // Login using DummyJSON API
       await dispatch(loginUser(username, password) as any);
+      // Load user-specific favorites
+      await dispatch(loadFavourites() as any);
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Welcome Back!',
+        text2: 'Login successful',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid username or password. Try: emilys / emilyspass');
+      Toast.show({
+        type: 'error',
+        text1: 'Login Failed',
+        text2: error.message || 'Invalid username or password',
+        position: 'top',
+        visibilityTime: 4000,
+      });
     }
   }
 

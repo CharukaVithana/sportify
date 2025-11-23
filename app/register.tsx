@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { useAppDispatch } from '@/store/hooks';
 import { registerUser } from '@/store/slices/authSlice';
 
@@ -22,7 +23,13 @@ export default function RegisterScreen() {
     // Basic validation
     if (!username || !email || !password || !confirmPassword) {
       console.log('Validation failed', { username, email, password, confirmPassword });
-      Alert.alert('Error', 'Please fill in all fields');
+      Toast.show({
+        type: 'error',
+        text1: 'Missing Fields',
+        text2: 'Please fill in all fields',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       setErrors({
         username: !username ? 'Username is required' : undefined,
         email: !email ? 'Email is required' : undefined,
@@ -34,7 +41,13 @@ export default function RegisterScreen() {
 
     if (password !== confirmPassword) {
       console.log('Passwords do not match');
-      Alert.alert('Error', 'Passwords do not match');
+      Toast.show({
+        type: 'error',
+        text1: 'Password Mismatch',
+        text2: 'Passwords do not match',
+        position: 'top',
+        visibilityTime: 3000,
+      });
       setErrors({ confirmPassword: 'Passwords do not match' });
       return;
     }
@@ -55,11 +68,27 @@ export default function RegisterScreen() {
       console.log('Registration result:', result);
       console.log('Registration successful, redirecting to login...');
       
-      // Redirect directly to login page
-      router.replace('/login');
+      Toast.show({
+        type: 'success',
+        text1: 'Registration Successful!',
+        text2: 'Please login with your credentials',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      
+      // Redirect to login page after a brief delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 500);
     } catch (error: any) {
       console.error('Registration error:', error);
-      Alert.alert('Registration Failed', error.message || 'An error occurred during registration. Please try again.');
+      Toast.show({
+        type: 'error',
+        text1: 'Registration Failed',
+        text2: error.message || 'An error occurred. Please try again.',
+        position: 'top',
+        visibilityTime: 4000,
+      });
     }
   }
 

@@ -79,6 +79,16 @@ const saveRegisteredUser = async (user: RegisteredUser): Promise<void> => {
 // Register new user - using DummyJSON API
 export const registerUser = (user: RegisteredUser) => async (dispatch: any) => {
   try {
+    // Check if email already exists
+    const existingUsers = await getRegisteredUsers();
+    const emailExists = existingUsers.some(
+      (existingUser) => existingUser.email.toLowerCase() === user.email.toLowerCase()
+    );
+    
+    if (emailExists) {
+      throw new Error('This email is already registered. Please use a different email or login.');
+    }
+
     // DummyJSON add user endpoint (Note: This is simulated, data won't persist on server)
     const response = await fetch('https://dummyjson.com/users/add', {
       method: 'POST',
