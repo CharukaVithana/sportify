@@ -10,7 +10,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800' }}
+        source={{ uri: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800' }}
         style={styles.backgroundImage}
         resizeMode="cover"
         blurRadius={3}

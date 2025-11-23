@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Image } from 'react-native';
 import { router, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,56 +18,46 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(logoutUser() as any);
-            // Navigate to login
-            routerHook.push('/login');
-          },
-        },
-      ]
-    );
+    dispatch(logoutUser() as any);
+    // Navigate to welcome page
+    routerHook.replace('/welcome');
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={theme === 'dark' ? ['#4CAF50', '#2E7D32', '#1B5E20'] : ['#81C784', '#4CAF50', '#388E3C']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientHeader}
-      >
-        <View style={styles.profileRow}>
-          <View style={styles.avatarContainer}>
-            <View style={[styles.avatar, { backgroundColor: user?.avatar?.startsWith('data:image') ? 'transparent' : '#fff' }]}>
+      {/* Profile Header with Dark Background */}
+      <View style={[styles.headerContainer, { backgroundColor: theme === 'dark' ? '#000' : '#1a1a1a' }]}>
+        <View style={styles.avatarWrapper}>
+          {/* Gradient Border */}
+          <LinearGradient
+            colors={['#4CAF50', '#2E7D32', '#81C784']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientBorder}
+          >
+            <View style={styles.avatarInnerContainer}>
               {user?.avatar?.startsWith('data:image') ? (
                 <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
               ) : user?.avatar ? (
                 <Text style={styles.avatarEmoji}>{user.avatar}</Text>
               ) : (
-                <Text style={[styles.avatarText, { color: colors.primary }]}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
+                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.avatarText}>{user?.name?.charAt(0).toUpperCase() || 'G'}</Text>
+                </View>
               )}
             </View>
-            <TouchableOpacity 
-              style={styles.cameraButton}
-              onPress={() => routerHook.push('/edit-profile')}
-            >
-              <Feather name="camera" size={16} color="#fff" />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>
-            <Text style={styles.userEmail}>{user?.email || 'guest@sportify.com'}</Text>
-          </View>
+          </LinearGradient>
+          {/* Camera Button */}
+          <TouchableOpacity 
+            style={styles.cameraButton}
+            onPress={() => routerHook.push('/edit-profile')}
+          >
+            <Feather name="camera" size={14} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </LinearGradient>
+        <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>
+        <Text style={styles.userEmail}>{user?.email || 'guest@sportify.com'}</Text>
+      </View>
 
       <View style={[styles.statsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
         <View style={styles.statBox}>
@@ -157,6 +147,78 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 30,
   },
+  headerContainer: {
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  avatarWrapper: {
+    marginBottom: 20,
+    position: 'relative',
+  },
+  gradientBorder: {
+    width: 95,
+    height: 95,
+    borderRadius: 47.5,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInnerContainer: {
+    width: 87,
+    height: 87,
+    borderRadius: 43.5,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#4CAF50',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2.5,
+    borderColor: '#fff',
+  },
+  avatarPlaceholder: {
+    width: 87,
+    height: 87,
+    borderRadius: 43.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  avatarEmoji: {
+    fontSize: 44,
+  },
+  avatarImage: {
+    width: 87,
+    height: 87,
+    borderRadius: 43.5,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 6,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+  },
   header: {
     padding: 24,
     paddingTop: 16,
@@ -175,45 +237,9 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: '#fff',
   },
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: -5,
-    backgroundColor: '#4CAF50',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  avatarText: {
-    fontSize: 42,
-    fontWeight: 'bold',
-  },
-  avatarEmoji: {
-    fontSize: 55,
-  },
-  avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
   userInfo: {
     flex: 1,
     justifyContent: 'center',
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    color: '#fff',
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.9,
   },
   editButton: {
     flexDirection: 'row',

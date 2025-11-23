@@ -17,29 +17,31 @@ export default function RegisterScreen() {
   const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string; confirmPassword?: string }>({});
 
   async function handleRegister() {
-    Alert.alert('Test', 'Button clicked!'); // TEST
     console.log('Register button clicked');
+    
+    // Basic validation
+    if (!username || !email || !password || !confirmPassword) {
+      console.log('Validation failed', { username, email, password, confirmPassword });
+      Alert.alert('Error', 'Please fill in all fields');
+      setErrors({
+        username: !username ? 'Username is required' : undefined,
+        email: !email ? 'Email is required' : undefined,
+        password: !password ? 'Password is required' : undefined,
+        confirmPassword: !confirmPassword ? 'Confirm password is required' : undefined,
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      console.log('Passwords do not match');
+      Alert.alert('Error', 'Passwords do not match');
+      setErrors({ confirmPassword: 'Passwords do not match' });
+      return;
+    }
+
+    setErrors({});
+
     try {
-      // Basic validation
-      if (!username || !email || !password || !confirmPassword) {
-        console.log('Validation failed', { username, email, password, confirmPassword });
-        setErrors({
-          username: !username ? 'Username is required' : undefined,
-          email: !email ? 'Email is required' : undefined,
-          password: !password ? 'Password is required' : undefined,
-          confirmPassword: !confirmPassword ? 'Confirm password is required' : undefined,
-        });
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        console.log('Passwords do not match');
-        setErrors({ confirmPassword: 'Passwords do not match' });
-        return;
-      }
-
-      setErrors({});
-
       // Register the user
       const newUser = {
         name: username.trim(),
@@ -49,18 +51,12 @@ export default function RegisterScreen() {
 
       console.log('Dispatching registerUser with:', newUser);
       const result = await dispatch(registerUser(newUser));
+      
       console.log('Registration result:', result);
+      console.log('Registration successful, redirecting to login...');
       
-      const generatedUsername = email.split('@')[0]; // Extract username from email
-      
-      // Show success message and redirect to login
-      Alert.alert(
-        'Success!', 
-        `Account created successfully!\n\nYour username: ${generatedUsername}\n\nPlease login with your credentials.`,
-        [
-          { text: 'OK', onPress: () => router.replace('/login') }
-        ]
-      );
+      // Redirect directly to login page
+      router.replace('/login');
     } catch (error: any) {
       console.error('Registration error:', error);
       Alert.alert('Registration Failed', error.message || 'An error occurred during registration. Please try again.');

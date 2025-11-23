@@ -79,12 +79,6 @@ export default function LoginScreen() {
                 <Text style={styles.buttonText}>Login</Text>
               </TouchableOpacity>
 
-              <View style={styles.testCredentials}>
-                <Text style={styles.testTitle}>💡 Test Credentials (DummyJSON):</Text>
-                <Text style={styles.testText}>Username: emilys | Password: emilyspass</Text>
-                <Text style={styles.testText}>Or register with any email!</Text>
-              </View>
-
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Don&apos;t have an account? </Text>
                 <TouchableOpacity onPress={() => router.push('/register')}>
