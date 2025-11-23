@@ -2,27 +2,58 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useApp } from '@/contexts/AppContext';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setUser } from '@/store/slices/authSlice';
+import { editProfileSchema } from '@/schemas/validationSchemas';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { user, setUser } = useApp();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
   const { colors } = useTheme();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
 
-  const handleSave = () => {
-    if (!name.trim() || !email.trim()) {
-      Alert.alert('Validation', 'Please fill all fields.');
-      return;
+  const handleSave = async () => {
+    try {
+      await editProfileSchema.validate({ name, email }, { abortEarly: false });
+      setErrors({});
+
+      const updatedUser = {
+        ...user,
+        name: name.trim(),
+        email: email.trim(),
+        token: user?.token || 'dummy-token',
+      };
+
+      // Update AsyncStorage
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update Redux state
+      dispatch(setUser(updatedUser));
+      
+      // Navigate back to profile immediately
+      router.back();
+      
+      // Show success message after navigation
+      setTimeout(() => {
+        Alert.alert('Success', 'Profile updated successfully!');
+      }, 300);
+    } catch (error: any) {
+      if (error.name === 'ValidationError') {
+        const validationErrors: any = {};
+        error.inner.forEach((err: any) => {
+          validationErrors[err.path] = err.message;
+        });
+        setErrors(validationErrors);
+      } else {
+        Alert.alert('Error', 'Failed to update profile');
+      }
     }
-
-    setUser({ name: name.trim(), email: email.trim() });
-    Alert.alert('Success', 'Profile updated successfully!', [
-      { text: 'OK', onPress: () => router.back() }
-    ]);
   };
 
   return (
@@ -55,6 +86,7 @@ export default function EditProfileScreen() {
                 autoCapitalize="words"
               />
             </View>
+            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
           </View>
 
           <View style={styles.inputGroup}>
@@ -71,6 +103,7 @@ export default function EditProfileScreen() {
                 autoCapitalize="none"
               />
             </View>
+            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
           </View>
 
           <TouchableOpacity 
@@ -173,5 +206,11 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });

@@ -4,10 +4,15 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useApp } from '@/contexts/AppContext';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { logoutUser } from '@/store/slices/authSlice';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, setUser, favourites, theme, toggleTheme } = useApp();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const favourites = useAppSelector((state) => state.favourites.items);
+  const { theme, toggleTheme } = useApp();
   const { colors } = useTheme();
 
   const handleLogout = () => {
@@ -20,8 +25,9 @@ export default function ProfileScreen() {
           text: 'Logout',
           style: 'destructive',
           onPress: () => {
-            setUser(null);
-            router.replace('/login');
+            dispatch(logoutUser() as any);
+            // Use href to force navigation out of tabs
+            router.push('../../login' as any);
           },
         },
       ]

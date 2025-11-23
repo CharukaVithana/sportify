@@ -2,16 +2,23 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
-import { useApp, SportItem } from '@/contexts/AppContext';
+import { useTheme } from '@/hooks/use-theme';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { removeFavouriteAsync, SportItem } from '@/store/slices/favouritesSlice';
 
 export default function FavouritesScreen() {
   const router = useRouter();
-  const { favourites, removeFavourite } = useApp();
+  const dispatch = useAppDispatch();
+  const { colors } = useTheme();
+  const favourites = useAppSelector((state) => state.favourites.items);
+
+  const handleRemoveFavourite = (id: string) => {
+    dispatch(removeFavouriteAsync(id) as any);
+  };
 
   const renderCard = ({ item }: { item: SportItem }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
       onPress={() => router.push(`/details?id=${item.id}` as any)}
       activeOpacity={0.7}
     >
@@ -21,26 +28,26 @@ export default function FavouritesScreen() {
         </View>
         <View style={styles.cardInfo}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
+            <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
               {item.title}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
               <Text style={styles.statusText}>{item.status}</Text>
             </View>
           </View>
-          <Text style={styles.cardDescription} numberOfLines={2}>
+          <Text style={[styles.cardDescription, { color: colors.icon }]} numberOfLines={2}>
             {item.description}
           </Text>
           <View style={styles.cardFooter}>
             <View style={styles.categoryBadge}>
-              <Feather name={getCategoryIcon(item.category)} size={12} color={Colors.light.primary} />
-              <Text style={styles.categoryText}>{item.category}</Text>
+              <Feather name={getCategoryIcon(item.category)} size={12} color={colors.primary} />
+              <Text style={[styles.categoryText, { color: colors.primary }]}>{item.category}</Text>
             </View>
             <TouchableOpacity
-              onPress={() => removeFavourite(item.id)}
+              onPress={() => handleRemoveFavourite(item.id)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Feather name="heart" size={20} color={Colors.light.error} fill={Colors.light.error} />
+              <Feather name="heart" size={20} color={colors.error} fill={colors.error} />
             </TouchableOpacity>
           </View>
         </View>
@@ -50,22 +57,22 @@ export default function FavouritesScreen() {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Feather name="heart" size={80} color={Colors.light.border} />
-      <Text style={styles.emptyTitle}>No Favourites Yet!</Text>
-      <Text style={styles.emptyText}>
+      <Feather name="heart" size={80} color={colors.border} />
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>No Favourites Yet!</Text>
+      <Text style={[styles.emptyText, { color: colors.icon }]}>
         Start adding your favorite sports events, players, and teams from the Home screen.
       </Text>
-      <TouchableOpacity style={styles.exploreButton} onPress={() => router.push('/(tabs)')}>
+      <TouchableOpacity style={[styles.exploreButton, { backgroundColor: colors.error }]} onPress={() => router.push('/(tabs)')}>
         <Text style={styles.exploreButtonText}>Explore Sports</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Feather name="heart" size={24} color={Colors.light.error} />
-        <Text style={styles.headerTitle}>My Favourites</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <Feather name="heart" size={24} color={colors.error} />
+        <Text style={[styles.headerTitle, { color: colors.text }]}>My Favourites</Text>
         {favourites.length > 0 && (
           <View style={styles.countBadge}>
             <Text style={styles.countText}>{favourites.length}</Text>
@@ -88,13 +95,13 @@ export default function FavouritesScreen() {
 function getStatusColor(status: string): string {
   switch (status) {
     case 'Active':
-      return Colors.light.success;
+      return '#10b981';
     case 'Upcoming':
-      return Colors.light.primary;
+      return '#6366f1';
     case 'Completed':
-      return Colors.light.icon;
+      return '#9ca3af';
     default:
-      return Colors.light.accent;
+      return '#f59e0b';
   }
 }
 
@@ -114,7 +121,6 @@ function getCategoryIcon(category: string): any {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -127,10 +133,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.light.text,
   },
   countBadge: {
-    backgroundColor: Colors.light.error,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -149,11 +153,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   card: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -168,7 +170,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: Colors.light.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -189,7 +190,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
     marginRight: 8,
   },
   statusBadge: {
@@ -204,7 +204,6 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: 14,
-    color: Colors.light.icon,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -216,7 +215,6 @@ const styles = StyleSheet.create({
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -224,7 +222,6 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    color: Colors.light.primary,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -236,23 +233,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.light.text,
     marginTop: 24,
     marginBottom: 12,
   },
   emptyText: {
     fontSize: 16,
-    color: Colors.light.icon,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   exploreButton: {
-    backgroundColor: Colors.light.primary,
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

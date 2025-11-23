@@ -1,51 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
-import { useApp } from '@/contexts/AppContext';
-import { fetchSportsData } from '@/services/sportsApi';
-import { SportItem } from '@/contexts/AppContext';
+import { useTheme } from '@/hooks/use-theme';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchSports } from '@/store/slices/sportsSlice';
+import { addFavouriteAsync, removeFavouriteAsync, SportItem } from '@/store/slices/favouritesSlice';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isFavourite, addFavourite, removeFavourite } = useApp();
-  const [sportsData, setSportsData] = useState<SportItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useAppDispatch();
+  const { colors } = useTheme();
+  const { items: sportsData, loading } = useAppSelector((state) => state.sports);
+  const { items: favourites } = useAppSelector((state) => state.favourites);
+  const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const data = await fetchSportsData();
-      setSportsData(data);
-    } catch (error) {
-      console.error('Error loading sports data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    dispatch(fetchSports());
+  }, [dispatch]);
 
   const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
+    dispatch(fetchSports());
+  };
+
+  const isFavourite = (id: string) => {
+    return favourites.some((fav) => fav.id === id);
   };
 
   const toggleFavourite = (item: SportItem) => {
     if (isFavourite(item.id)) {
-      removeFavourite(item.id);
+      dispatch(removeFavouriteAsync(item.id) as any);
     } else {
-      addFavourite(item);
+      dispatch(addFavouriteAsync(item) as any);
     }
   };
 
   const renderCard = ({ item }: { item: SportItem }) => (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
       onPress={() => router.push(`/details?id=${item.id}` as any)}
       activeOpacity={0.7}
     >
@@ -55,20 +47,20 @@ export default function HomeScreen() {
         </View>
         <View style={styles.cardInfo}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
+            <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
               {item.title}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
               <Text style={styles.statusText}>{item.status}</Text>
             </View>
           </View>
-          <Text style={styles.cardDescription} numberOfLines={2}>
+          <Text style={[styles.cardDescription, { color: colors.icon }]} numberOfLines={2}>
             {item.description}
           </Text>
           <View style={styles.cardFooter}>
             <View style={styles.categoryBadge}>
-              <Feather name={getCategoryIcon(item.category)} size={12} color={Colors.light.primary} />
-              <Text style={styles.categoryText}>{item.category}</Text>
+              <Feather name={getCategoryIcon(item.category)} size={12} color={colors.primary} />
+              <Text style={[styles.categoryText, { color: colors.primary }]}>{item.category}</Text>
             </View>
             <TouchableOpacity
               onPress={() => toggleFavourite(item)}
@@ -77,8 +69,8 @@ export default function HomeScreen() {
               <Feather
                 name="heart"
                 size={20}
-                color={isFavourite(item.id) ? Colors.light.error : Colors.light.icon}
-                fill={isFavourite(item.id) ? Colors.light.error : 'transparent'}
+                color={isFavourite(item.id) ? colors.error : colors.icon}
+                fill={isFavourite(item.id) ? colors.error : 'transparent'}
               />
             </TouchableOpacity>
           </View>
@@ -89,23 +81,23 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
-        <Text style={styles.loadingText}>Loading sports data...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading sports data...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={styles.headerTitle}>Sportify</Text>
-          <Text style={styles.headerSubtitle}>Discover sports events</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Sportify</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.icon }]}>Discover sports events</Text>
         </View>
-        <View style={styles.userBadge}>
-          <Feather name="user" size={20} color={Colors.light.primary} />
-          <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
+        <View style={[styles.userBadge, { backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.border }]}>
+          <Feather name="user" size={20} color={colors.primary} />
+          <Text style={[styles.userName, { color: colors.primary }]}>{user?.name || 'Guest'}</Text>
         </View>
       </View>
 
@@ -116,7 +108,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.light.primary]} />
+          <RefreshControl refreshing={loading} onRefresh={onRefresh} colors={[colors.primary]} />
         }
       />
     </View>
@@ -126,13 +118,13 @@ export default function HomeScreen() {
 function getStatusColor(status: string): string {
   switch (status) {
     case 'Active':
-      return Colors.light.success;
+      return '#10b981';
     case 'Upcoming':
-      return Colors.light.primary;
+      return '#6366f1';
     case 'Completed':
-      return Colors.light.icon;
+      return '#9ca3af';
     default:
-      return Colors.light.accent;
+      return '#f59e0b';
   }
 }
 
@@ -152,18 +144,15 @@ function getCategoryIcon(category: string): any {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: Colors.light.icon,
   },
   header: {
     flexDirection: 'row',
@@ -172,22 +161,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: Colors.light.background,
+    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.light.primary,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: Colors.light.icon,
     marginTop: 2,
   },
   userBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -196,17 +182,14 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.light.text,
   },
   listContent: {
     padding: 16,
   },
   card: {
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -221,7 +204,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 12,
-    backgroundColor: Colors.light.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -242,7 +224,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.light.text,
     marginRight: 8,
   },
   statusBadge: {
@@ -257,7 +238,6 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: 14,
-    color: Colors.light.icon,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -269,7 +249,6 @@ const styles = StyleSheet.create({
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -277,7 +256,6 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    color: Colors.light.primary,
     fontWeight: '600',
   },
 });

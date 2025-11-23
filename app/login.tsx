@@ -2,78 +2,95 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
-import { useApp } from '@/contexts/AppContext';
+import { useTheme } from '@/hooks/use-theme';
+import { useAppDispatch } from '@/store/hooks';
+import { loginUser } from '@/store/slices/authSlice';
+import { loginSchema } from '@/schemas/validationSchemas';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { setUser } = useApp();
+  const dispatch = useAppDispatch();
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  function handleLogin() {
-    if (!email.trim() || !password) {
-      Alert.alert('Validation', 'Please enter email and password.');
-      return;
+  async function handleLogin() {
+    try {
+      // Validate with Yup
+      await loginSchema.validate({ email, password }, { abortEarly: false });
+      setErrors({});
+
+      // Login - validate against registered users
+      await dispatch(loginUser(email, password) as any);
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      if (error.name === 'ValidationError') {
+        const validationErrors: any = {};
+        error.inner.forEach((err: any) => {
+          validationErrors[err.path] = err.message;
+        });
+        setErrors(validationErrors);
+      } else if (error.message === 'Invalid email or password') {
+        Alert.alert('Login Failed', 'Invalid email or password. Please try again or register a new account.');
+      } else {
+        Alert.alert('Error', 'An error occurred during login');
+      }
     }
-
-    // Set user in context (TODO: replace with actual API call)
-    const userName = email.split('@')[0];
-    setUser({ name: userName.charAt(0).toUpperCase() + userName.slice(1), email });
-    
-    router.replace('/(tabs)');
   }
 
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Feather name="activity" size={60} color={Colors.light.primary} />
-          <Text style={styles.title}>Welcome to Sportify</Text>
-          <Text style={styles.subtitle}>Login to continue</Text>
+          <Feather name="activity" size={60} color={colors.primary} />
+          <Text style={[styles.title, { color: colors.text }]}>Welcome to Sportify</Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>Login to continue</Text>
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Feather name="mail" size={20} color={Colors.light.icon} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Feather name="mail" size={20} color={colors.icon} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Email"
-              placeholderTextColor={Colors.light.icon}
+              placeholderTextColor={colors.icon}
               value={email}
               autoCapitalize="none"
               keyboardType="email-address"
               onChangeText={setEmail}
             />
           </View>
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-          <View style={styles.inputContainer}>
-            <Feather name="lock" size={20} color={Colors.light.icon} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Feather name="lock" size={20} color={colors.icon} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Password"
-              placeholderTextColor={Colors.light.icon}
+              placeholderTextColor={colors.icon}
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Feather name={showPassword ? 'eye' : 'eye-off'} size={20} color={Colors.light.icon} />
+              <Feather name={showPassword ? 'eye' : 'eye-off'} size={20} color={colors.icon} />
             </TouchableOpacity>
           </View>
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleLogin}>
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.icon }]}>Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.link}>Register</Text>
+              <Text style={[styles.link, { color: colors.primary }]}>Register</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -85,7 +102,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -99,12 +115,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.light.text,
     marginTop: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.light.icon,
     marginTop: 8,
   },
   form: {
@@ -113,12 +127,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   inputIcon: {
     marginRight: 12,
@@ -127,19 +139,16 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     fontSize: 16,
-    color: Colors.light.text,
   },
   eyeIcon: {
     padding: 8,
   },
   button: {
-    backgroundColor: Colors.light.primary,
     borderRadius: 12,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: Colors.light.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -156,12 +165,17 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: Colors.light.icon,
     fontSize: 15,
   },
   link: {
-    color: Colors.light.primary,
     fontSize: 15,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 12,
+    marginLeft: 4,
   },
 });

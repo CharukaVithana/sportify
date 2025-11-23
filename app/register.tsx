@@ -2,109 +2,135 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useAppDispatch } from '@/store/hooks';
+import { registerUser } from '@/store/slices/authSlice';
+import { registerSchema } from '@/schemas/validationSchemas';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { colors } = useTheme();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string; confirmPassword?: string }>({});
 
-  function handleRegister() {
-    if (!username.trim() || !email.trim() || !password) {
-      Alert.alert('Validation', 'Please fill all required fields.');
-      return;
-    }
-    if (password !== confirm) {
-      Alert.alert('Validation', 'Passwords do not match.');
-      return;
-    }
+  async function handleRegister() {
+    try {
+      await registerSchema.validate({ username, email, password, confirmPassword }, { abortEarly: false });
+      setErrors({});
 
-    // TODO: replace with API call
-    Alert.alert('Success', 'Account created successfully!', [
-      { text: 'OK', onPress: () => router.replace('/login') }
-    ]);
+      // Register the user
+      const newUser = {
+        name: username.trim(),
+        email: email.trim(),
+        password: password, // Store password for validation
+      };
+
+      await dispatch(registerUser(newUser) as any);
+      
+      Alert.alert('Success', 'Account created successfully! Please login.', [
+        { text: 'OK', onPress: () => router.replace('/login') }
+      ]);
+    } catch (error: any) {
+      if (error.name === 'ValidationError') {
+        const validationErrors: any = {};
+        error.inner.forEach((err: any) => {
+          validationErrors[err.path] = err.message;
+        });
+        setErrors(validationErrors);
+      } else if (error.message === 'Email already registered') {
+        Alert.alert('Registration Failed', 'This email is already registered. Please use a different email or login.');
+      } else {
+        Alert.alert('Error', 'An error occurred during registration');
+      }
+    }
   }
 
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Feather name="user-plus" size={60} color={Colors.light.primary} />
-          <Text style={styles.title}>Create Your Account</Text>
-          <Text style={styles.subtitle}>Join Sportify today</Text>
+          <Feather name="user-plus" size={60} color={colors.primary} />
+          <Text style={[styles.title, { color: colors.text }]}>Create Your Account</Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>Join Sportify today</Text>
         </View>
 
         <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Feather name="user" size={20} color={Colors.light.icon} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Feather name="user" size={20} color={colors.icon} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Username"
-              placeholderTextColor={Colors.light.icon}
+              placeholderTextColor={colors.icon}
               value={username}
               autoCapitalize="words"
               onChangeText={setUsername}
             />
           </View>
+          {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
 
-          <View style={styles.inputContainer}>
-            <Feather name="mail" size={20} color={Colors.light.icon} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Feather name="mail" size={20} color={colors.icon} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Email"
-              placeholderTextColor={Colors.light.icon}
+              placeholderTextColor={colors.icon}
               value={email}
               autoCapitalize="none"
               keyboardType="email-address"
               onChangeText={setEmail}
             />
           </View>
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-          <View style={styles.inputContainer}>
-            <Feather name="lock" size={20} color={Colors.light.icon} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Feather name="lock" size={20} color={colors.icon} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Password"
-              placeholderTextColor={Colors.light.icon}
+              placeholderTextColor={colors.icon}
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Feather name={showPassword ? 'eye' : 'eye-off'} size={20} color={Colors.light.icon} />
+              <Feather name={showPassword ? 'eye' : 'eye-off'} size={20} color={colors.icon} />
             </TouchableOpacity>
           </View>
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-          <View style={styles.inputContainer}>
-            <Feather name="lock" size={20} color={Colors.light.icon} style={styles.inputIcon} />
+          <View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Feather name="lock" size={20} color={colors.icon} style={styles.inputIcon} />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: colors.text }]}
               placeholder="Confirm Password"
-              placeholderTextColor={Colors.light.icon}
+              placeholderTextColor={colors.icon}
               secureTextEntry={!showConfirm}
-              value={confirm}
-              onChangeText={setConfirm}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
             />
             <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)} style={styles.eyeIcon}>
-              <Feather name={showConfirm ? 'eye' : 'eye-off'} size={20} color={Colors.light.icon} />
+              <Feather name={showConfirm ? 'eye' : 'eye-off'} size={20} color={colors.icon} />
             </TouchableOpacity>
           </View>
+          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
 
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <TouchableOpacity style={[styles.button, { backgroundColor: colors.success }]} onPress={handleRegister}>
             <Text style={styles.buttonText}>Register</Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.icon }]}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={styles.link}>Login</Text>
+              <Text style={[styles.link, { color: colors.primary }]}>Login</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -116,7 +142,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -130,12 +155,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.light.text,
     marginTop: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.light.icon,
     marginTop: 8,
   },
   form: {
@@ -144,12 +167,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.light.cardBackground,
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: Colors.light.border,
   },
   inputIcon: {
     marginRight: 12,
@@ -158,19 +179,16 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     fontSize: 16,
-    color: Colors.light.text,
   },
   eyeIcon: {
     padding: 8,
   },
   button: {
-    backgroundColor: Colors.light.success,
     borderRadius: 12,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    shadowColor: Colors.light.success,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -187,12 +205,17 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    color: Colors.light.icon,
     fontSize: 15,
   },
   link: {
-    color: Colors.light.primary,
     fontSize: 15,
     fontWeight: '600',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 12,
+    marginLeft: 4,
   },
 });

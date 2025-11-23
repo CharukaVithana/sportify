@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -16,13 +17,13 @@ export default function SplashScreen() {
   }, [router]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.logoContainer}>
-        <Feather name="activity" size={80} color={Colors.light.primary} />
-        <Text style={styles.title}>Sportify</Text>
-        <Text style={styles.subtitle}>Your Sports Hub</Text>
+        <Feather name="activity" size={80} color={colors.primary} />
+        <Text style={[styles.title, { color: colors.primary }]}>Sportify</Text>
+        <Text style={[styles.subtitle, { color: colors.icon }]}>Your Sports Hub</Text>
       </View>
-      <ActivityIndicator size="large" color={Colors.light.primary} style={styles.loader} />
+      <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
     </View>
   );
 }
@@ -30,7 +31,6 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -41,7 +41,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: Colors.light.primary,
     marginTop: 20,
   },
   subtitle: {
