@@ -90,13 +90,13 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Sportify</Text>
           <Text style={[styles.headerSubtitle, { color: colors.icon }]}>Discover sports events</Text>
         </View>
         <TouchableOpacity 
-          style={[styles.userCard, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+          style={[styles.userCard, { backgroundColor: '#000000', borderColor: '#4CAF50' }]}
           onPress={() => router.push('/(tabs)/profile')}
           activeOpacity={0.8}
         >
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 2,
     gap: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

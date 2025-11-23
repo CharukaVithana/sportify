@@ -15,13 +15,17 @@ export default function TabLayout() {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 85,
+          paddingBottom: 15,
+          paddingTop: 10,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
+          marginTop: 4,
+        },
+        tabBarIconStyle: {
+          marginTop: 5,
         },
       }}
     >
@@ -30,7 +34,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="home" size={20} color={color} />
           ),
         }}
       />
@@ -40,7 +44,7 @@ export default function TabLayout() {
         options={{
           title: "Favourites",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="heart" size={size} color={color} />
+            <Feather name="heart" size={20} color={color} />
           ),
         }}
       />
@@ -57,7 +61,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
+            <Feather name="user" size={20} color={color} />
           ),
         }}
       />

@@ -36,7 +36,7 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, { backgroundColor: user?.avatar?.startsWith('data:image') ? 'transparent' : colors.primary }]}>
             {user?.avatar?.startsWith('data:image') ? (
