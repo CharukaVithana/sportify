@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppProvider } from '@/contexts/AppContext';
@@ -16,8 +17,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Load persisted data on app start
-    store.dispatch(loadUser() as any);
-    store.dispatch(loadFavourites() as any);
+    store.dispatch(loadUser());
+    store.dispatch(loadFavourites());
   }, []);
 
   return (
@@ -36,6 +37,7 @@ export default function RootLayout() {
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
           <StatusBar style="auto" />
+          <Toast />
         </ThemeProvider>
       </AppProvider>
     </Provider>

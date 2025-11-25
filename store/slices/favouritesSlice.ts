@@ -1,5 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AppDispatch, RootState } from '../index';
+
+type AppThunk<ReturnType = void> = (
+  dispatch: AppDispatch,
+  getState: () => RootState
+) => ReturnType;
 
 export interface SportItem {
   id: string;
@@ -46,15 +52,18 @@ const favouritesSlice = createSlice({
 
 export const { setFavourites, addFavourite, removeFavourite, setLoading } = favouritesSlice.actions;
 
-// Async actions with AsyncStorage
-export const loadFavourites = () => async (dispatch: any) => {
+// Async actions with AsyncStorage - User-specific favorites
+export const loadFavourites = (): AppThunk => async (dispatch, getState) => {
   try {
     dispatch(setLoading(true));
-    const favouritesStr = await AsyncStorage.getItem('favourites');
+    const { auth } = getState();
+    const userId = auth.user?.email || auth.user?.username || 'guest';
+    const favouritesStr = await AsyncStorage.getItem(`favourites_${userId}`);
     if (favouritesStr) {
       const favourites = JSON.parse(favouritesStr);
       dispatch(setFavourites(favourites));
     } else {
+      dispatch(setFavourites([]));
       dispatch(setLoading(false));
     }
   } catch (error) {
@@ -63,24 +72,47 @@ export const loadFavourites = () => async (dispatch: any) => {
   }
 };
 
-export const addFavouriteAsync = (item: SportItem) => async (dispatch: any, getState: any) => {
+export const addFavouriteAsync = (item: SportItem): AppThunk => async (dispatch, getState) => {
   try {
+    const { favourites, auth } = getState();
+    const userId = auth.user?.email || auth.user?.username || 'guest';
+    
+    // Check if already exists
+    const exists = favourites.items.find((fav: SportItem) => fav.id === item.id);
+    if (exists) {
+      return; // Already in favorites, don't add again
+    }
+    
+    // Add to Redux state
     dispatch(addFavourite(item));
-    const { favourites } = getState();
-    await AsyncStorage.setItem('favourites', JSON.stringify(favourites.items));
+    
+    // Get updated state after dispatch
+    const updatedState = getState();
+    await AsyncStorage.setItem(`favourites_${userId}`, JSON.stringify(updatedState.favourites.items));
   } catch (error) {
     console.error('Add favourite error:', error);
   }
 };
 
-export const removeFavouriteAsync = (id: string) => async (dispatch: any, getState: any) => {
+export const removeFavouriteAsync = (id: string): AppThunk => async (dispatch, getState) => {
   try {
+    const { auth } = getState();
+    const userId = auth.user?.email || auth.user?.username || 'guest';
+    
+    // Remove from Redux state
     dispatch(removeFavourite(id));
-    const { favourites } = getState();
-    await AsyncStorage.setItem('favourites', JSON.stringify(favourites.items));
+    
+    // Get updated state after dispatch
+    const updatedState = getState();
+    await AsyncStorage.setItem(`favourites_${userId}`, JSON.stringify(updatedState.favourites.items));
   } catch (error) {
     console.error('Remove favourite error:', error);
   }
+};
+
+// Clear favorites on logout
+export const clearFavourites = (): AppThunk => async (dispatch) => {
+  dispatch(setFavourites([]));
 };
 
 export default favouritesSlice.reducer;

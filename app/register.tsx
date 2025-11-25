@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { useAppDispatch } from '@/store/hooks';
 import { registerUser } from '@/store/slices/authSlice';
+import { registerSchema } from '@/schemas/validationSchemas';
+import { ValidationError } from 'yup';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -19,27 +22,33 @@ export default function RegisterScreen() {
   async function handleRegister() {
     console.log('Register button clicked');
     
-    // Basic validation
-    if (!username || !email || !password || !confirmPassword) {
-      console.log('Validation failed', { username, email, password, confirmPassword });
-      Alert.alert('Error', 'Please fill in all fields');
-      setErrors({
-        username: !username ? 'Username is required' : undefined,
-        email: !email ? 'Email is required' : undefined,
-        password: !password ? 'Password is required' : undefined,
-        confirmPassword: !confirmPassword ? 'Confirm password is required' : undefined,
-      });
-      return;
+    // Yup schema validation
+    try {
+      await registerSchema.validate(
+        { username, email, password, confirmPassword },
+        { abortEarly: false }
+      );
+      setErrors({});
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        const validationErrors: { username?: string; email?: string; password?: string; confirmPassword?: string } = {};
+        err.inner.forEach((error) => {
+          if (error.path) {
+            validationErrors[error.path as keyof typeof validationErrors] = error.message;
+          }
+        });
+        setErrors(validationErrors);
+        
+        Toast.show({
+          type: 'error',
+          text1: 'Validation Error',
+          text2: err.errors[0] || 'Please check your inputs',
+          position: 'top',
+          visibilityTime: 3000,
+        });
+        return;
+      }
     }
-
-    if (password !== confirmPassword) {
-      console.log('Passwords do not match');
-      Alert.alert('Error', 'Passwords do not match');
-      setErrors({ confirmPassword: 'Passwords do not match' });
-      return;
-    }
-
-    setErrors({});
 
     try {
       // Register the user
@@ -55,11 +64,27 @@ export default function RegisterScreen() {
       console.log('Registration result:', result);
       console.log('Registration successful, redirecting to login...');
       
-      // Redirect directly to login page
-      router.replace('/login');
+      Toast.show({
+        type: 'success',
+        text1: 'Registration Successful!',
+        text2: 'Please login with your credentials',
+        position: 'top',
+        visibilityTime: 2000,
+      });
+      
+      // Redirect to login page after a brief delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 500);
     } catch (error: any) {
       console.error('Registration error:', error);
-      Alert.alert('Registration Failed', error.message || 'An error occurred during registration. Please try again.');
+      Toast.show({
+        type: 'error',
+        text1: 'Registration Failed',
+        text2: error.message || 'An error occurred. Please try again.',
+        position: 'top',
+        visibilityTime: 4000,
+      });
     }
   }
 

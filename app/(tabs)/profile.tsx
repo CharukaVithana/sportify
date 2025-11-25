@@ -7,6 +7,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logoutUser } from '@/store/slices/authSlice';
+import { clearFavourites } from '@/store/slices/favouritesSlice';
 
 export default function ProfileScreen() {
   const dispatch = useAppDispatch();
@@ -18,7 +19,8 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
 
   const handleLogout = () => {
-    dispatch(logoutUser() as any);
+    dispatch(logoutUser());
+    dispatch(clearFavourites());
     // Navigate to welcome page
     routerHook.replace('/welcome');
   };

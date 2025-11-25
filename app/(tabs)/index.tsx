@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchSports } from '@/store/slices/sportsSlice';
@@ -14,6 +15,11 @@ export default function HomeScreen() {
   const { items: sportsData, loading } = useAppSelector((state) => state.sports);
   const { items: favourites } = useAppSelector((state) => state.favourites);
   const user = useAppSelector((state) => state.auth.user);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = ['All', 'Basketball', 'Football', 'Tennis', 'Cricket'];
 
   useEffect(() => {
     dispatch(fetchSports());
@@ -29,21 +35,44 @@ export default function HomeScreen() {
 
   const toggleFavourite = (item: SportItem) => {
     if (isFavourite(item.id)) {
-      dispatch(removeFavouriteAsync(item.id) as any);
-      Alert.alert(
-        'Removed from Favourites',
-        `${item.title} has been removed from your favourites.`,
-        [{ text: 'OK' }]
-      );
+      dispatch(removeFavouriteAsync(item.id));
+      Toast.show({
+        type: 'info',
+        text1: 'Removed from Favourites',
+        text2: `${item.title} has been removed`,
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     } else {
-      dispatch(addFavouriteAsync(item) as any);
-      Alert.alert(
-        '❤️ Added to Favourites',
-        `${item.title} has been added to your favourites!`,
-        [{ text: 'OK' }]
-      );
+      dispatch(addFavouriteAsync(item));
+      Toast.show({
+        type: 'success',
+        text1: '❤️ Added to Favourites',
+        text2: `${item.title} has been added!`,
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     }
   };
+
+  // Filter data based on search and category
+  const filteredData = sportsData.filter((item) => {
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Category filter based on sport type in description or title
+    let matchesCategory = selectedCategory === 'All';
+    if (!matchesCategory) {
+      const lowerCategory = selectedCategory.toLowerCase();
+      const lowerTitle = item.title.toLowerCase();
+      const lowerDesc = item.description.toLowerCase();
+      
+      // Check if the category appears in title or description
+      matchesCategory = lowerTitle.includes(lowerCategory) || lowerDesc.includes(lowerCategory);
+    }
+    
+    return matchesSearch && matchesCategory;
+  });
 
   const renderCard = ({ item }: { item: SportItem }) => {
     // Check if image is a URL or emoji
@@ -137,13 +166,72 @@ export default function HomeScreen() {
       </View>
 
       <FlatList
-        data={sportsData}
+        data={filteredData}
         renderItem={renderCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        extraData={searchQuery + selectedCategory}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={onRefresh} colors={[colors.primary]} />
+        }
+        ListHeaderComponent={
+          <>
+            {/* Search Bar */}
+            <View style={styles.searchContainer}>
+              <View style={[styles.searchBar, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                <Feather name="search" size={20} color={colors.icon} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder="Search teams, players..."
+                  placeholderTextColor={colors.icon}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Feather name="x-circle" size={18} color={colors.icon} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {/* Category Filters */}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterContainer}
+            >
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  style={[
+                    styles.filterButton,
+                    selectedCategory === category && { backgroundColor: '#CDFF00' },
+                    selectedCategory !== category && { backgroundColor: colors.cardBackground, borderColor: colors.border }
+                  ]}
+                  onPress={() => setSelectedCategory(category)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.filterText,
+                      selectedCategory === category ? { color: '#000' } : { color: colors.text }
+                    ]}
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Live & Upcoming</Text>
+            </View>
+          </>
         }
       />
     </View>
@@ -261,6 +349,53 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     gap: 6,
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 4,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  filterContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    gap: 10,
+  },
+  filterButton: {
+    paddingHorizontal: 20,
+    height: 44,
+    justifyContent: 'center',
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   listContent: {
     padding: 16,
