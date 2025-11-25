@@ -17,8 +17,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Load persisted data on app start
-    store.dispatch(loadUser() as any);
-    store.dispatch(loadFavourites() as any);
+    store.dispatch(loadUser());
+    store.dispatch(loadFavourites());
   }, []);
 
   return (

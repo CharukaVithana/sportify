@@ -18,14 +18,25 @@ export default function FavouritesScreen() {
   const categories = ['All', 'Basketball', 'Football', 'Tennis', 'Cricket'];
 
   const handleRemoveFavourite = (id: string) => {
-    dispatch(removeFavouriteAsync(id) as any);
+    dispatch(removeFavouriteAsync(id));
   };
 
   // Filter favourites based on search and category
   const filteredFavourites = favourites.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || item.description.includes(selectedCategory);
+    
+    // Category filter based on sport type in description or title
+    let matchesCategory = selectedCategory === 'All';
+    if (!matchesCategory) {
+      const lowerCategory = selectedCategory.toLowerCase();
+      const lowerTitle = item.title.toLowerCase();
+      const lowerDesc = item.description.toLowerCase();
+      
+      // Check if the category appears in title or description
+      matchesCategory = lowerTitle.includes(lowerCategory) || lowerDesc.includes(lowerCategory);
+    }
+    
     return matchesSearch && matchesCategory;
   });
 
@@ -141,6 +152,11 @@ export default function FavouritesScreen() {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Feather name="x-circle" size={18} color={colors.icon} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 

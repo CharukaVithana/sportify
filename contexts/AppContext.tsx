@@ -1,24 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeMode = 'light' | 'dark';
 
-export interface SportItem {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  status: 'Active' | 'Upcoming' | 'Completed';
-  category: 'Match' | 'Player' | 'Team';
-  date?: string;
-}
-
 interface AppContextType {
-  favourites: SportItem[];
-  addFavourite: (item: SportItem) => void;
-  removeFavourite: (id: string) => void;
-  isFavourite: (id: string) => boolean;
-  user: { name: string; email: string } | null;
-  setUser: (user: { name: string; email: string } | null) => void;
   theme: ThemeMode;
   toggleTheme: () => void;
 }
@@ -26,44 +11,36 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [favourites, setFavourites] = useState<SportItem[]>([]);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [theme, setTheme] = useState<ThemeMode>('light');
 
-  const addFavourite = (item: SportItem) => {
-    setFavourites((prev) => {
-      if (prev.find((fav) => fav.id === item.id)) {
-        return prev;
+  // Load theme from storage on mount
+  useEffect(() => {
+    loadTheme();
+  }, []);
+
+  const loadTheme = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        setTheme(savedTheme);
       }
-      return [...prev, item];
-    });
+    } catch (error) {
+      console.error('Error loading theme:', error);
+    }
   };
 
-  const removeFavourite = (id: string) => {
-    setFavourites((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const isFavourite = (id: string) => {
-    return favourites.some((item) => item.id === id);
-  };
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  const toggleTheme = async () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    try {
+      await AsyncStorage.setItem('theme', newTheme);
+    } catch (error) {
+      console.error('Error saving theme:', error);
+    }
   };
 
   return (
-    <AppContext.Provider
-      value={{
-        favourites,
-        addFavourite,
-        removeFavourite,
-        isFavourite,
-        user,
-        setUser,
-        theme,
-        toggleTheme,
-      }}
-    >
+    <AppContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </AppContext.Provider>
   );

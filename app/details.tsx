@@ -33,7 +33,7 @@ export default function DetailsScreen() {
 
   const toggleFavourite = () => {
     if (isItemFavourite) {
-      dispatch(removeFavouriteAsync(item.id) as any);
+      dispatch(removeFavouriteAsync(item.id));
       Toast.show({
         type: 'info',
         text1: 'Removed from Favourites',
@@ -42,7 +42,7 @@ export default function DetailsScreen() {
         visibilityTime: 2000,
       });
     } else {
-      dispatch(addFavouriteAsync(item) as any);
+      dispatch(addFavouriteAsync(item));
       Toast.show({
         type: 'success',
         text1: '❤️ Added to Favourites',

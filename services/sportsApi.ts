@@ -1,4 +1,4 @@
-import { SportItem } from '@/contexts/AppContext';
+import { SportItem } from '@/store/slices/favouritesSlice';
 
 // TheSportsDB API Configuration
 const API_BASE_URL = 'https://www.thesportsdb.com/api/v1/json';

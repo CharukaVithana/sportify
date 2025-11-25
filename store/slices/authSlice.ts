@@ -1,5 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AppDispatch, RootState } from '../index';
+
+type AppThunk<ReturnType = void> = (
+  dispatch: AppDispatch,
+  getState: () => RootState
+) => ReturnType;
 
 interface User {
   id?: number;
@@ -77,7 +83,7 @@ const saveRegisteredUser = async (user: RegisteredUser): Promise<void> => {
 };
 
 // Register new user - using DummyJSON API
-export const registerUser = (user: RegisteredUser) => async (dispatch: any) => {
+export const registerUser = (user: RegisteredUser): AppThunk<Promise<{ success: boolean; username?: string }>> => async (dispatch) => {
   try {
     // Check if email already exists
     const existingUsers = await getRegisteredUsers();
@@ -124,7 +130,7 @@ export const registerUser = (user: RegisteredUser) => async (dispatch: any) => {
 };
 
 // Login user - using DummyJSON API
-export const loginUser = (username: string, password: string) => async (dispatch: any) => {
+export const loginUser = (username: string, password: string): AppThunk<Promise<{ success: boolean }>> => async (dispatch) => {
   try {
     // First, try DummyJSON API login
     const response = await fetch('https://dummyjson.com/auth/login', {
@@ -188,7 +194,7 @@ export const loginUser = (username: string, password: string) => async (dispatch
   }
 };
 
-export const logoutUser = () => async (dispatch: any) => {
+export const logoutUser = (): AppThunk => async (dispatch) => {
   try {
     await AsyncStorage.removeItem('user');
     await AsyncStorage.removeItem('authToken');
@@ -198,7 +204,7 @@ export const logoutUser = () => async (dispatch: any) => {
   }
 };
 
-export const loadUser = () => async (dispatch: any) => {
+export const loadUser = (): AppThunk => async (dispatch) => {
   try {
     dispatch(setLoading(true));
     const userStr = await AsyncStorage.getItem('user');

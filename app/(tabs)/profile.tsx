@@ -19,8 +19,8 @@ export default function ProfileScreen() {
   const { colors } = useTheme();
 
   const handleLogout = () => {
-    dispatch(logoutUser() as any);
-    dispatch(clearFavourites() as any);
+    dispatch(logoutUser());
+    dispatch(clearFavourites());
     // Navigate to welcome page
     routerHook.replace('/welcome');
   };

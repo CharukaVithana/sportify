@@ -1,5 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AppDispatch, RootState } from '../index';
+
+type AppThunk<ReturnType = void> = (
+  dispatch: AppDispatch,
+  getState: () => RootState
+) => ReturnType;
 
 export interface SportItem {
   id: string;
@@ -47,7 +53,7 @@ const favouritesSlice = createSlice({
 export const { setFavourites, addFavourite, removeFavourite, setLoading } = favouritesSlice.actions;
 
 // Async actions with AsyncStorage - User-specific favorites
-export const loadFavourites = () => async (dispatch: any, getState: any) => {
+export const loadFavourites = (): AppThunk => async (dispatch, getState) => {
   try {
     dispatch(setLoading(true));
     const { auth } = getState();
@@ -66,7 +72,7 @@ export const loadFavourites = () => async (dispatch: any, getState: any) => {
   }
 };
 
-export const addFavouriteAsync = (item: SportItem) => async (dispatch: any, getState: any) => {
+export const addFavouriteAsync = (item: SportItem): AppThunk => async (dispatch, getState) => {
   try {
     const { favourites, auth } = getState();
     const userId = auth.user?.email || auth.user?.username || 'guest';
@@ -88,7 +94,7 @@ export const addFavouriteAsync = (item: SportItem) => async (dispatch: any, getS
   }
 };
 
-export const removeFavouriteAsync = (id: string) => async (dispatch: any, getState: any) => {
+export const removeFavouriteAsync = (id: string): AppThunk => async (dispatch, getState) => {
   try {
     const { auth } = getState();
     const userId = auth.user?.email || auth.user?.username || 'guest';
@@ -105,7 +111,7 @@ export const removeFavouriteAsync = (id: string) => async (dispatch: any, getSta
 };
 
 // Clear favorites on logout
-export const clearFavourites = () => async (dispatch: any) => {
+export const clearFavourites = (): AppThunk => async (dispatch) => {
   dispatch(setFavourites([]));
 };
 

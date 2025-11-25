@@ -6,38 +6,51 @@ import Toast from 'react-native-toast-message';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/authSlice';
 import { loadFavourites } from '@/store/slices/favouritesSlice';
+import { loginSchema } from '@/schemas/validationSchemas';
+import { ValidationError } from 'yup';
 
 export default function LoginScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   async function handleLogin() {
+    // Yup schema validation
     try {
-      // Basic validation
-      if (!username || !password) {
-        setErrors({
-          username: !username ? 'Username is required' : undefined,
-          password: !password ? 'Password is required' : undefined,
+      await loginSchema.validate(
+        { email, password },
+        { abortEarly: false }
+      );
+      setErrors({});
+    } catch (err) {
+      if (err instanceof ValidationError) {
+        const validationErrors: { email?: string; password?: string } = {};
+        err.inner.forEach((error) => {
+          if (error.path) {
+            validationErrors[error.path as keyof typeof validationErrors] = error.message;
+          }
         });
+        setErrors(validationErrors);
+        
         Toast.show({
           type: 'error',
-          text1: 'Missing Fields',
-          text2: 'Please fill in all fields',
+          text1: 'Validation Error',
+          text2: err.errors[0] || 'Please check your inputs',
           position: 'top',
           visibilityTime: 3000,
         });
         return;
       }
-      setErrors({});
+    }
 
-      // Login using DummyJSON API
-      await dispatch(loginUser(username, password) as any);
+    try {
+      // Login using DummyJSON API - use email as username
+      await dispatch(loginUser(email, password));
       // Load user-specific favorites
-      await dispatch(loadFavourites() as any);
+      await dispatch(loadFavourites());
       
       Toast.show({
         type: 'success',
@@ -76,17 +89,18 @@ export default function LoginScreen() {
 
             <View style={styles.form}>
               <View style={styles.inputContainer}>
-                <Feather name="user" size={18} color="#666" style={styles.inputIcon} />
+                <Feather name="mail" size={18} color="#666" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Username"
+                  placeholder="Email"
                   placeholderTextColor="#999"
-                  value={username}
+                  value={email}
                   autoCapitalize="none"
-                  onChangeText={setUsername}
+                  keyboardType="email-address"
+                  onChangeText={setEmail}
                 />
               </View>
-              {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
               <View style={styles.inputContainer}>
                 <Feather name="lock" size={18} color="#666" style={styles.inputIcon} />
@@ -98,6 +112,9 @@ export default function LoginScreen() {
                   value={password}
                   onChangeText={setPassword}
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Feather name={showPassword ? "eye" : "eye-off"} size={18} color="#666" />
+                </TouchableOpacity>
               </View>
               {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
