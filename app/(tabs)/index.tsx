@@ -171,6 +171,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        extraData={searchQuery + selectedCategory}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={onRefresh} colors={[colors.primary]} />
         }
@@ -186,6 +187,8 @@ export default function HomeScreen() {
                   placeholderTextColor={colors.icon}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
+                  autoCapitalize="none"
+                  autoCorrect={false}
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>

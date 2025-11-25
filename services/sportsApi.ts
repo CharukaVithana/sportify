@@ -146,12 +146,17 @@ export const fetchSportsData = async (): Promise<SportItem[]> => {
       fetchUpcomingEvents(),
     ]);
 
-    // Combine and shuffle the data
+    // Combine all data
     const allData = [...teams, ...players, ...events];
     
-    console.log(`Fetched ${allData.length} items from TheSportsDB`);
+    // Remove duplicates based on ID
+    const uniqueData = Array.from(
+      new Map(allData.map(item => [item.id, item])).values()
+    );
     
-    return allData;
+    console.log(`Fetched ${uniqueData.length} unique items from TheSportsDB`);
+    
+    return uniqueData;
   } catch (error) {
     console.error('Error in fetchSportsData:', error);
     // Return empty array on error

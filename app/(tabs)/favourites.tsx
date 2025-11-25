@@ -151,6 +151,8 @@ export default function FavouritesScreen() {
                 placeholderTextColor={colors.icon}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
